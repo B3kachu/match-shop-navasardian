@@ -135,3 +135,28 @@ PlaceOrder(anna, hunting, 5);      // хватает
 PlaceOrder(ivan, fireplace, 1000); // не хватает
 // Вопрос: почему заказ и новый остаток важно сохранить одним SaveChanges?
 // Ответ: если не сохранять заказ и остаток одним SaveChanges, то при падении базы данных - данные разойдутся, в базе данных товара будет больше чем есть на самом деле.
+
+
+
+
+Console.WriteLine("=== Шаг 6 ===");
+
+// Пример: удаляем Ольгу
+var leaving = db.Customers.First(c => c.Name == "Ольга Смирнова");
+db.Customers.Remove(leaving);
+db.SaveChanges();
+
+// Задание: удалить все товары, которых нет на складе
+var outOfStock = db.Products.Where(p => p.Stock == 0).ToList();
+db.Products.RemoveRange(outOfStock);
+db.SaveChanges();
+Console.WriteLine($"Товаров осталось: {db.Products.Count()}");
+
+// Усложнение: удалить покупателя, у которого есть заказы
+var offended = db.Customers.First(c => c.Name == "Иван Петров");   // у Ивана два заказа
+db.Customers.Remove(offended);
+db.SaveChanges();
+Console.WriteLine($"Заказов осталось: {db.Orders.Count()}");
+// Вопрос: что стало с его заказами? Почему так произошло и хорошо ли это для магазина?
+// Ответ: заказы удалились вместе в пользователем из-за того что заказ не может сущестовать без покупателя - CustomerId типа int, без? .
+// Это скорее плохо для магазина, т.к при запросе пользователя о его прошлых заказов информации не будет.
