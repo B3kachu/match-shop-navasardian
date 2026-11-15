@@ -45,3 +45,54 @@ db.Orders.AddRange(
 // Ответ: Now - местное время, а UTCNow - UTC, единое время для планеты.PostgreSQL принимает только UTC, поэтому местное время Npsql не пропускает
 // у Павла и Марии заказов нет
 db.SaveChanges();
+
+Console.WriteLine("=== Шаг 4 ===");
+
+// Пример: покупатели из Омска по алфавиту
+var omsk = db.Customers
+    .Where(c => c.City == "Омск")
+    .OrderBy(c => c.Name)
+    .ToList();
+
+foreach (var c in omsk)
+    Console.WriteLine($"{c.Name}, {c.Phone}");
+
+// Задание 1: спички дешевле 100 ₽, от дешёвых к дорогим
+var cheap = db.Products
+    .Where(p => p.Price < 100)
+    .OrderBy(p => p.Price)
+    .ToList();
+
+Console.WriteLine("Дешевле 100 ₽:");
+foreach (var p in cheap)
+    Console.WriteLine($"{p.Name} — {p.Price} ₽");
+
+// Задание 2: сколько видов спичек есть на складе
+int inStock = db.Products.Count(p => p.Stock > 0);
+Console.WriteLine($"Видов на складе: {inStock}");
+
+// Задание 3: три самых дорогих товара
+var top3 = db.Products
+    .OrderByDescending(p => p.Price)
+    .Take(3)
+    .ToList();
+
+Console.WriteLine("Самые дорогие:");
+foreach (var p in top3)
+    Console.WriteLine($"{p.Name} — {p.Price} ₽");
+
+// Усложнение: все заказы и общая выручка
+var orders = db.Orders
+    .Include(o => o.Customer)   // подтянуть покупателя (JOIN)
+    .Include(o => o.Product)    // подтянуть товар (JOIN)
+    .OrderBy(o => o.Id)
+    .ToList();
+
+decimal total = 0;
+foreach (var o in orders)
+{
+    decimal sum = o.Product.Price * o.Quantity;   // сумма заказа
+    total += sum;
+    Console.WriteLine($"{o.Customer.Name} — {o.Product.Name} — {o.Quantity} шт. — {sum} ₽");
+}
+Console.WriteLine($"Общая выручка: {total} ₽");
