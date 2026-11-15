@@ -96,3 +96,42 @@ foreach (var o in orders)
     Console.WriteLine($"{o.Customer.Name} — {o.Product.Name} — {o.Quantity} шт. — {sum} ₽");
 }
 Console.WriteLine($"Общая выручка: {total} ₽");
+
+
+Console.WriteLine("=== Шаг 5 ===");
+
+// Пример: новый телефон Ивана
+var customer = db.Customers.First(c => c.Name == "Иван Петров");
+customer.Phone = "+7 900 999-00-00";
+db.SaveChanges();
+
+// Задание 1: все спички дороже на 10%
+var allProducts = db.Products.ToList();
+foreach (var p in allProducts)
+    p.Price = p.Price * 1.1m;
+db.SaveChanges();   // один SaveChanges — EF отправит UPDATE для каждого товара
+
+// Задание 2: один товар закончился
+var ended = db.Products.First(p => p.Name == "Сувенирные");
+ended.Stock = 0;
+db.SaveChanges();
+
+// Усложнение: «Оформить заказ»
+void PlaceOrder(Customer buyer, Product item, int boxes)
+{
+    if (item.Stock < boxes)
+    {
+        Console.WriteLine($"Недостаточно на складе: {item.Name} (есть {item.Stock}, нужно {boxes})");
+        return;   // ничего не меняем
+    }
+
+    db.Orders.Add(new Order { Customer = buyer, Product = item, Quantity = boxes, CreatedAt = DateTime.UtcNow });
+    item.Stock -= boxes;   // уменьшаем остаток
+    db.SaveChanges();      // заказ и новый остаток — одним SaveChanges
+    Console.WriteLine($"Заказ оформлен: {buyer.Name}, {item.Name}, {boxes} шт. Осталось: {item.Stock}");
+}
+
+PlaceOrder(anna, hunting, 5);      // хватает
+PlaceOrder(ivan, fireplace, 1000); // не хватает
+// Вопрос: почему заказ и новый остаток важно сохранить одним SaveChanges?
+// Ответ: если не сохранять заказ и остаток одним SaveChanges, то при падении базы данных - данные разойдутся, в базе данных товара будет больше чем есть на самом деле.
